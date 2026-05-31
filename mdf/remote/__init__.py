@@ -53,6 +53,7 @@ class Proxy(object):
         # doesn't happen.
         raise Exception("Proxy objects aren't pickleable")
 
+@Pyro4.expose
 class ContextProxy(Proxy):
     """
     Proxy for MDFContext that replaces some methods so
@@ -107,6 +108,7 @@ class SerializedContext(object):
     def _get_real_context(self):
         return self.__serializer.deserialize(self.__data, self.__compressed)
 
+@Pyro4.expose
 class MDFRemoteAPI(object):
     """
     Pyro remote object for creating and interacting with mdf
