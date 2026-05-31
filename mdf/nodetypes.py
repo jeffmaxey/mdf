@@ -135,7 +135,7 @@ class MDFCustomNode(MDFEvalNode):
         self._cn_func = self._validate_func(func)
         self._category = category
         self._kwargs = dict(nodetype_func_kwargs)
-        self._kwnodes = dict([(k, v) for (k, v) in nodetype_func_kwargs) if isinstance(v, MDFNode)].items()
+        self._kwnodes = {k: v for k, v in nodetype_func_kwargs.items() if isinstance(v, MDFNode)}
         self._kwfuncs = {} # reserved for functions added via decorators
 
         # if 'filter_node_value' is in the node type generator args we pass in the value of the filter

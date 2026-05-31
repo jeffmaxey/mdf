@@ -548,7 +548,7 @@ class MDFContext(object):
         return list(self._shifted_contexts.keys())
 
     def iter_shifted_contexts(self):
-        return self._shifted_contexts.keys()
+        return iter(self._shifted_contexts.keys())
 
     @classmethod
     def register_node(cls, node):
