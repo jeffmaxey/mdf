@@ -158,8 +158,8 @@ class MDFCustomNode(MDFEvalNode):
                              category=category,
                              filter=filter)
 
-        # set __doc__ from the inner function's docstring
-        self.__doc__ = getattr(func, "__doc__", None)
+        # store docstring explicitly; __doc__ on extension types is read-only
+        self.func_doc = getattr(func, "__doc__", None)
 
     def __reduce__(self):
         """support for pickling"""
@@ -292,8 +292,8 @@ class MDFCustomNode(MDFEvalNode):
         else:
             MDFEvalNode._set_func(self, self._cn_eval_func)
 
-        # update the docstring
-        self.__doc__ = getattr(func, "__doc__", None)
+        # update stored docstring
+        self.func_doc = getattr(func, "__doc__", None)
 
         # set the func used by this class
         self._cn_func = func
@@ -323,8 +323,8 @@ class MDFCustomNode(MDFEvalNode):
             if _is_member_of(owner, func):
                 self._kwfuncs[k] = self._bind_function(func, owner)
 
-        # set the docstring for the bound node to the same as the unbound one
-        self.__doc__ = other.__doc__
+        # set stored docstring for the bound node to the same as the unbound one
+        self.func_doc = other.func_doc
 
     def _get_kwargs(self):
         kwargs = cython.declare(dict)
@@ -534,10 +534,10 @@ class MDFCustomNodeMethod(object):
                                           filter=filter,
                                           nodetype_func_kwargs=nodetype_func_kwargs)
 
-            # update the docstring
-            derived_node.__doc__ = "\n".join(("*Derived Node* ::", "",
-                                                "    " + short_name, "",
-                                                derived_node.__doc__ or "")).strip()
+            # update stored docstring
+            derived_node.func_doc = "\n".join(("*Derived Node* ::", "",
+                                                 "    " + short_name, "",
+                                                 derived_node.func_doc or "")).strip()
 
             self._derived_nodes[derived_node_key] = derived_node
 
@@ -846,8 +846,8 @@ class MDFDelayNode(MDFCustomNode):
         func = self._dn_get_prev_value if self._dn_lazy else self._dn_func
         self._set_func(func)
 
-        # set the docstring for the bound node to the same as the unbound one
-        self.__doc__ = other.__doc__
+        # set stored docstring for the bound node to the same as the unbound one
+        self.func_doc = other.func_doc
 
     def _dn_get_prev_value(self):
         # The value returned on date 'now' is the value for the previous day. 
@@ -1547,7 +1547,7 @@ class _rowiternode(MDFIterator):
                 self._current_index = next(self._iter)
                 self._current_value = self._data.xs(self._current_index)
 
-            elif isinstance(data, pa.WidePanel):
+            elif hasattr(pa, "WidePanel") and isinstance(data, pa.WidePanel):
                 self._is_widepanel = True
 
                 # convert missing value to a dataframe with the same dimensions as the panel

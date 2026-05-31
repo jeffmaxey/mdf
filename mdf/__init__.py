@@ -125,7 +125,7 @@ if "sphinx" in sys.modules:
 
     def _evalnode_autodoc_getattr(node, attr, *defargs):
         if attr == "__doc__":
-            return node.__doc__
+            return getattr(node, "func_doc", None)
         safe_getattr(node, attr, *defargs)
 
     AutoDirective._special_attrgetters[MDFEvalNode] = _evalnode_autodoc_getattr

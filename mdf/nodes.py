@@ -64,9 +64,10 @@ def _get_calling_module_and_class():
                 if filename:
                     file_base, ext = os.path.splitext(filename)
                     for m in sys.modules.values():
-                        if hasattr(m, "__file__"):
+                        module_file = getattr(m, "__file__", None)
+                        if module_file:
                             # ignore the .py/.pyc suffixes
-                            m_base, ext = os.path.splitext(m.__file__)
+                            m_base, ext = os.path.splitext(module_file)
                             if m_base == file_base:
                                 module = m
                                 break
@@ -472,24 +473,39 @@ class MDFNode(MDFNodeBase):
     # 
     def __add__(lhs, rhs):
         return MDFNode._commutative_binop("__add__", lhs, rhs)
+
+    def __radd__(self, other):
+        return MDFNode._commutative_binop("__add__", self, other)
     
     def __mul__(lhs, rhs):
         return MDFNode._commutative_binop("__mul__", lhs, rhs)
+
+    def __rmul__(self, other):
+        return MDFNode._commutative_binop("__mul__", self, other)
     
     def __sub__(lhs, rhs):
         if isinstance(lhs, MDFNode):
             return MDFNode._op("__sub__", lhs, rhs)
         return -rhs + lhs
+
+    def __rsub__(self, other):
+        return -self + other
     
     def __div__(lhs, rhs):
         if isinstance(lhs, MDFNode):
             return MDFNode._commutative_binop("__div__", lhs, rhs)
         return (_one_node / rhs) * lhs
 
+    def __rdiv__(self, other):
+        return (_one_node / self) * other
+
     def __truediv__(lhs, rhs):
         if isinstance(lhs, MDFNode):
             return MDFNode._commutative_binop("__truediv__", lhs, rhs)
         return (_one_node / rhs) * lhs
+
+    def __rtruediv__(self, other):
+        return (_one_node / self) * other
     
     def __neg__(self):
         return MDFNode._op("__neg__", self)
@@ -1225,7 +1241,7 @@ class MDFNode(MDFNodeBase):
     def __call__(self):
         """set up the context and return the value for this node"""
         if _profiling_enabled:
-            stop_time = time.clock()
+            stop_time = time.perf_counter()
 
         ctx_ = cython.declare(MDFContext)
         ctx_ = _get_current_context()
@@ -1379,8 +1395,8 @@ class MDFEvalNode(MDFNode):
         MDFNode.__init__(self, name=name, short_name=short_name, fqname=fqname, cls=cls, category=category)
         self._has_timestep_update = self._is_generator
         
-        # get __doc__ to allow instances (iterators etc) to set their own docstring
-        self.__doc__ = getattr(func, "__doc__", None)
+        # store function docstring explicitly; __doc__ on extension types is read-only
+        self.func_doc = getattr(func, "__doc__", None)
 
     @property
     def node_type(self):
@@ -1409,8 +1425,8 @@ class MDFEvalNode(MDFNode):
         self._func = func
         self._is_generator = _isgeneratorfunction(self._func)
 
-        # update the docstring
-        self.__doc__ = getattr(func, "__doc__", None)
+        # update stored docstring
+        self.func_doc = getattr(func, "__doc__", None)
 
     def _bind(self, other, owner):
         """
@@ -1427,8 +1443,8 @@ class MDFEvalNode(MDFNode):
         else:
             self._filter_func = other._filter_func
 
-        # set the docstring for the bound node to the same as the unbound one
-        self.__doc__ = other.__doc__
+        # set stored docstring for the bound node to the same as the unbound one
+        self.func_doc = other.func_doc
 
     def _bind_function(self, func, owner):
         """convenience method for binding a function to an owner"""

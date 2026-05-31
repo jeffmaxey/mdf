@@ -7,6 +7,7 @@ from ..nodes import MDFNode, MDFEvalNode
 from collections import deque, defaultdict
 import datetime
 import operator
+from functools import reduce
 import csv
 import matplotlib.pyplot as pp
 import sys
@@ -446,7 +447,9 @@ class DataFrameBuilder(object):
                 pass
 
         # try and infer types for any that are currently set to object
-        return result_df.convert_objects()
+        if hasattr(result_df, "convert_objects"):
+            return result_df.convert_objects()
+        return result_df.infer_objects(copy=False)
 
     def _build_dataframe(self, ctx, dtype):
         """builds a dataframe from the collected data"""

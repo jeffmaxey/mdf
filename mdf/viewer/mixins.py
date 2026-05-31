@@ -4,6 +4,7 @@ Common mixin classes intended to be shared by controls in the mdf viewer.
 import wx
 import wx.grid
 import operator
+from functools import reduce
 
 class GridCopyMixin:
     """mixin for use with a wx.Grid to provide Ctrl+C copy binding"""

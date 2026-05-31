@@ -1,5 +1,5 @@
-from nodes cimport NodeState, MDFNode, MDFVarNode
-from context cimport MDFContext, _all_nodes
+from .nodes cimport NodeState, MDFNode, MDFVarNode
+from .context cimport MDFContext, _all_nodes
 
 cpdef _pickle_context(MDFContext ctx)
 cpdef MDFContext _unpickle_context(cls, ctx_id, now, node_states, shift_sets)

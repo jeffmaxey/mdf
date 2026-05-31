@@ -32,23 +32,23 @@ class RemoteTest(unittest.TestCase):
         num_processes = 4
 
         # process the scenarios in parallel
-        start_time = time.clock()
+        start_time = time.perf_counter()
         shifted_ctxs = run(date_range,
                            [df_builder],
                            shifts=shifts,
                            ctx=self.ctx,
                            num_processes=num_processes)
-        end_time = time.clock()
+        end_time = time.perf_counter()
 
         # do the same thing in a single process
         sync_df_builder = DataFrameBuilder([X])
         
-        sync_start_time = time.clock()
+        sync_start_time = time.perf_counter()
         sync_shifted_ctxs = run(date_range, [sync_df_builder], shifts=shifts, ctx=self.ctx)
-        sync_end_time = time.clock()
+        sync_end_time = time.perf_counter()
 
         # the contexts should be returned in the same order
-        self.assertEquals(shifted_ctxs, sync_shifted_ctxs)
+        self.assertEqual(shifted_ctxs, sync_shifted_ctxs)
 
         for ctx in shifted_ctxs:
             df = df_builder.get_dataframe(ctx)

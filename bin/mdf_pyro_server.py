@@ -12,7 +12,7 @@ if __name__ == "__main__":
     # if --fork was specified process the input data and possibly set the
     # pythonpath before importing any non builtin or standard modules
     if "--fork" in sys.argv:
-        _startup_data = pickle.load(sys.stdin)
+        _startup_data = pickle.load(sys.stdin.buffer)
 
         pythonpath = _startup_data.get("pythonpath", None)
         if pythonpath is not None:

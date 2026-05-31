@@ -12,6 +12,10 @@ import copy
 import sys
 
 import Pyro4.util
+Pyro4.config.REQUIRE_EXPOSE = False
+Pyro4.config.METADATA = False
+Pyro4.config.SERIALIZER = "pickle"
+Pyro4.config.SERIALIZERS_ACCEPTED = {"pickle"}
 
 import pickle
 Pyro4.util.Serializer.pickle = pickle
@@ -164,7 +168,7 @@ class MDFRemoteAPI(object):
         if not shifts:
             shifted_contexts = [shifted_contexts]
 
-        shifted_contexts = map(self.get_remote_context, shifted_contexts)
+        shifted_contexts = list(map(self.get_remote_context, shifted_contexts))
         return shifted_contexts, callbacks
 
     def shutdown(self):

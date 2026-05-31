@@ -85,7 +85,7 @@ class PickleTest(unittest.TestCase):
         # pickling preserves shifted contexts so this should return
         # an existing shifted context
         new_shifted_ctx = new_ctx.shift({A : a})
-        self.assertNotEquals(new_shifted_ctx, shifted_ctx) 
+        self.assertNotEqual(new_shifted_ctx, shifted_ctx) 
 
         self.assertEqual(new_shifted_ctx[A], a)
         self.assertEqual(new_shifted_ctx[B], b)

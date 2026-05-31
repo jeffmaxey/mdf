@@ -7,7 +7,7 @@ from mdf import (
 )
 
 from datetime import datetime, timedelta
-from numpy.testing.utils import assert_almost_equal
+from numpy.testing import assert_almost_equal
 import pandas as ps
 import numpy as np
 import unittest

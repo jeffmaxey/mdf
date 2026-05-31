@@ -1,5 +1,6 @@
 import time
 import itertools
+import operator
 import os
 from datetime import datetime
 import cython
@@ -110,12 +111,12 @@ def _lazy_imports():
     # import MDFNode after this module has been imported
     # to avoid circular import dependencies
     global MDFNode, _now_node
-    import nodes
+    from . import nodes
     MDFNode = nodes.MDFNode
     _now_node = nodes._now_node
 
     global _pickle_context, _unpickle_context
-    import ctx_pickle
+    from . import ctx_pickle
     _pickle_context = ctx_pickle._pickle_context
     _unpickle_context = ctx_pickle._unpickle_context
 
@@ -135,17 +136,17 @@ class Timer(object):
         assert not self.is_running
         self.num_calls += 1
         self.is_running = True
-        self.started_time = time.clock()
+        self.started_time = time.perf_counter()
 
     def resume(self):
         if not self.is_running:
-            self.started_time = time.clock()
+            self.started_time = time.perf_counter()
             self.is_running = True
 
     def stop(self, stop_time):
         assert self.is_running
         if stop_time < 0.0:
-            stop_time = time.clock()
+            stop_time = time.perf_counter()
         self.total_time += stop_time - self.started_time
         self.is_running = False
 
@@ -877,7 +878,7 @@ class MDFContext(object):
         returns the value of the node in this context
         """
         if _profiling_enabled:
-            stop_time = time.clock()
+            stop_time = time.perf_counter()
             ctx = cython.declare(MDFContext)
             ctx = self._parent or self
             timer = cython.declare(Timer)
@@ -981,7 +982,7 @@ class MDFContext(object):
 
     def _stop_timer(self):
         """stops the current timer, pops it off the stack of timers and returns it"""
-        stop_time = time.clock()
+        stop_time = time.perf_counter()
         ctx = self._parent or self
         timer = cython.declare(Timer)
         timer = ctx._timer_stack.pop()
@@ -990,7 +991,7 @@ class MDFContext(object):
 
     def _pause_current_timer(self, stop_time):
         """stops the current timer and returns it, call timer.resume to resume"""
-        stop_time = stop_time or time.clock()
+        stop_time = stop_time or time.perf_counter()
         ctx = self._parent or self
         timer = cython.declare(Timer)
         timer = ctx._timer_stack[-1]
@@ -1123,17 +1124,15 @@ class MDFContext(object):
 
                 all_timers.setdefault(name, []).append(timer)
 
-        def timers_total_time(x):
-            _, timers = x
-            return sum([t.total_time for t in timers])
-
-        all_timers = list(all_timers.items())
-        all_timers.sort(key=timers_total_time)
+        all_timers = [(name,
+                       timers,
+                       sum([t.total_time for t in timers]))
+                      for name, timers in all_timers.items()]
+        all_timers.sort(key=operator.itemgetter(2))
 
         total_time = 0.0
-        for name, timers in all_timers:
+        for name, timers, node_total_time in all_timers:
             node_num_calls = sum([t.num_calls for t in timers])
-            node_total_time = sum([t.total_time for t in timers])
             print(name)
             print("    Num Calls: %d" % node_num_calls)
             print("    Total Time: %f" % node_total_time)
@@ -1251,7 +1250,7 @@ def shift(node, target=None, values=None, shift_sets=None):
     contexts.
     """
     if _profiling_enabled:
-        stop_time = time.clock()
+        stop_time = time.perf_counter()
 
     thread_id = PyThread_get_thread_ident()
     ctx = _get_current_context(thread_id)

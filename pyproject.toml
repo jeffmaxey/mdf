@@ -20,6 +20,7 @@ dependencies = [
     "matplotlib",
     "openpyxl",
     "pydot",
+    "xlwt",
 ]
 
 [project.optional-dependencies]

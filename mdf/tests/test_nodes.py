@@ -198,7 +198,7 @@ class NodeTest(unittest.TestCase):
         value =  self.ctx[ffill_array_test]
         unfilled_value = self.ctx[ffill_array_test_not_filled]
         self.assertTrue(np.isnan(unfilled_value).all())
-        self.assertEquals(value.tolist(), [10., 10., 10., 10., 10.])
+        self.assertEqual(value.tolist(), [10., 10., 10., 10., 10.])
 
     def test_datanode_ffill(self):
         data = pd.Series(range(len(self.daterange)), self.daterange, dtype=float)
@@ -213,7 +213,7 @@ class NodeTest(unittest.TestCase):
         self._run(qnode)
         value = self.ctx[qnode]
 
-        self.assertEquals(list(value), expected.values.tolist())
+        self.assertEqual(list(value), expected.values.tolist())
 
     def test_lookahead_node(self):
         B_queue = B.queuenode()
@@ -225,8 +225,8 @@ class NodeTest(unittest.TestCase):
         self._run(B_queue)
         expected = self.ctx[B_queue]
 
-        self.assertEquals(actual.values.tolist(), list(expected))
-        self.assertEquals(actual.index.tolist(), list(self.daterange))
+        self.assertEqual(actual.values.tolist(), list(expected))
+        self.assertEqual(actual.index.tolist(), list(self.daterange))
     
     def test_apply_node(self):
         actual_node = A.applynode(func=operator.add, args=(B,)).queuenode()
@@ -236,7 +236,7 @@ class NodeTest(unittest.TestCase):
         actual = self.ctx[actual_node]
         expected = self.ctx[expected_node]
 
-        self.assertEquals(actual, expected)
+        self.assertEqual(actual, expected)
 
     def test_binary_operators_with_constant(self):
         self._test(Counter,            [-2.0, -1.5, -1.0, -0.5,  0.5,  1.0,  1.5])
@@ -261,7 +261,7 @@ class NodeTest(unittest.TestCase):
         values = node.queuenode()
         self._run(values)
         actual = self.ctx[values]
-        self.assertEquals(list(actual), expected_values)
+        self.assertEqual(list(actual), expected_values)
         
     def _run_for_daterange(self, date_range, *nodes):
         for t in date_range:

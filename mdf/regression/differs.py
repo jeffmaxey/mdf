@@ -278,10 +278,10 @@ class DataFrameDiffer(DataFrameBuilder, Differ):
             tolerance, is_abs = self.get_tolerance(node)
             if is_abs:
                 diffs = np.abs(lhs_df - rhs_df)
-                mask = (diffs > tolerance).values
+                mask = np.array((diffs > tolerance).values, copy=True)
             else:
                 diffs = np.abs((lhs_df / rhs_df) - 1.0)
-                mask = (diffs > tolerance).values
+                mask = np.array((diffs > tolerance).values, copy=True)
 
             # don't include differences where both sides are NaN or 0.0
             try:

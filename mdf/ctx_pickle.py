@@ -153,7 +153,7 @@ def _unpickle_context(cls, ctx_id, now, node_states, shift_sets):
     # get the node states and fixup the ctx id references
     for ctx_id, node, wrapper in node_states:
         node_state = wrapper.node_state
-        node_state.ctx_id = ctx_id_fixup[node_state.ctx_id]
+        node_state.ctx_id = ctx_id_fixup.get(node_state.ctx_id, node_state.ctx_id)
 
         if wrapper.alt_context_id in all_ctxs:
             node_state.alt_context = all_ctxs[wrapper.alt_context_id]
@@ -164,16 +164,22 @@ def _unpickle_context(cls, ctx_id, now, node_states, shift_sets):
         node_state_callers = node_state.callers
         node_state.callers = {}
         for caller_ctx_id, callers in node_state_callers.items():
-            new_caller_ctx_id = ctx_id_fixup[caller_ctx_id]
+            new_caller_ctx_id = ctx_id_fixup.get(caller_ctx_id)
+            if new_caller_ctx_id is None:
+                continue
             node_state.callers[new_caller_ctx_id] = callers
 
         node_state_callees = node_state.callees
         node_state.callees = {}
         for callee_ctx_id, callees in node_state_callees.items():
-            new_callee_ctx_id = ctx_id_fixup[callee_ctx_id]
+            new_callee_ctx_id = ctx_id_fixup.get(callee_ctx_id)
+            if new_callee_ctx_id is None:
+                continue
             node_state.callees[new_callee_ctx_id] = callees
 
-        new_ctx_id = ctx_id_fixup[ctx_id]
+        new_ctx_id = ctx_id_fixup.get(ctx_id)
+        if new_ctx_id is None:
+            continue
         node._states[new_ctx_id] = node_state
 
     return root

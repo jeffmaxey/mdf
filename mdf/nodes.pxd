@@ -1,6 +1,6 @@
-from context cimport MDFContext, MDFNodeBase
-from context cimport _get_current_context, _get_context, _profiling_enabled
-from cqueue cimport *
+from .context cimport MDFContext, MDFNodeBase
+from .context cimport _get_current_context, _get_context, _profiling_enabled
+from .cqueue cimport *
 
 cdef int DIRTY_FLAGS_NONE
 cdef int DIRTY_FLAGS_ALL
@@ -129,4 +129,3 @@ cdef class MDFTimeNode(MDFVarNode):
 
     # public Python API
     cpdef set_value(self, MDFContext ctx, value)
-

@@ -108,7 +108,9 @@ def run(date_range,
 
         # get each shift set as a sorted list so when the shifts are
         # applied they're always done in the same order
-        shift_sets = [sorted(x.items()) for x in shifts]
+        shift_sets = [sorted(x.items(),
+                             key=lambda item: getattr(item[0], "name", str(item[0])))
+                      for x in shifts]
 
         contexts = []
         for shift_set in shift_sets:
@@ -155,7 +157,7 @@ def run(date_range,
                     found_generator = True
 
                     # advance to the first yield statement
-                    generator.next()
+                    next(generator)
 
             # if any of the callbacks are actually generators remove them
             if found_generator:
@@ -200,8 +202,8 @@ def _run_multiprocess(date_range, callbacks, shifts, filter, num_processes, unsh
         process = Process(target=_start_remote_server, args=(sys.argv, child_conn))
         process.daemon = True
         process.start()
-        timeout = time.clock() + 60
-        while process.is_alive() and time.clock() < timeout:
+        timeout = time.perf_counter() + 60
+        while process.is_alive() and time.perf_counter() < timeout:
             if parent_conn.poll(1):
                 break
         else:
@@ -242,7 +244,7 @@ def _run_multiprocess(date_range, callbacks, shifts, filter, num_processes, unsh
         # kick off all the asynchronous runs
         future_results = []
         for batch in batches:
-            future_results.append(batch(**{"async": True}))
+            future_results.append(batch(asynchronous=True))
 
         # poll the daemon for this process in case anything is using it while
         # waiting for the results
@@ -264,7 +266,7 @@ def _run_multiprocess(date_range, callbacks, shifts, filter, num_processes, unsh
 
         # everything's done, get the results
         try:
-            results = [x.value.next() for x in future_results]
+            results = [next(x.value) for x in future_results]
         except:
             _logger.error("".join(Pyro4.util.getPyroTraceback()))
             raise
@@ -301,12 +303,12 @@ def _multprocessing_exit():
     """
     multiprocessing.util._exiting = True
     multiprocessing.util._run_finalizers(0)
-    for p in multiprocessing.util.active_children():
-        if p._daemonic:
-            p._popen.terminate()
+    for p in multiprocessing.active_children():
+        if p.is_alive():
+            p.terminate()
 
-    for p in multiprocessing.util.active_children():
-        p.join()
+    for p in multiprocessing.active_children():
+        p.join(1.0)
 
     multiprocessing.util._run_finalizers()
 
@@ -393,7 +395,7 @@ def scenario(date_range,
     ctx_iter = iter(contexts)
     for y in range(len(y_shifts)):
         for x in range(len(x_shifts)):
-            ctx = ctx_iter.next()
+            ctx = next(ctx_iter)
             array[y][x] = collector.get_values(ctx)[0]
 
     return array

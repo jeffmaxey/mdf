@@ -79,6 +79,8 @@ def _fh_redirect(fh_in, fh_out, prefix):
         line = fh_in.readline()
         if not line:
             break
+        if isinstance(line, bytes):
+            line = line.decode("utf-8", errors="replace")
         fh_out.write(prefix + " : " + line.strip("\r\n") + "\n")
 
 def _start_pyro_subprocess(python_exe, side, modulenames=[],
@@ -97,7 +99,7 @@ def _start_pyro_subprocess(python_exe, side, modulenames=[],
         "modules"   : modulenames,
     }
     if init_func is not None:
-        _start_data["init_func"] = marshal.dumps(init_func.func_code)
+        _start_data["init_func"] = marshal.dumps(init_func.__code__)
     _start_data.update(startup_data)
 
 
@@ -166,6 +168,8 @@ def _start_pyro_subprocess(python_exe, side, modulenames=[],
     uri = None
     while uri is None and child_process.poll() is None:
         line = child_process.stdout.readline()
+        if isinstance(line, bytes):
+            line = line.decode("utf-8", errors="replace")
         _logger.debug(line)
         if line.startswith("URI="):
             unused, uri = line.strip().split("=")
@@ -318,8 +322,8 @@ def run(date_range, differs, lhs, rhs, filter=None, ctx=None,
         rhs_batch.run(date_range, callbacks=differs, filter=filter)
 
         lhs_start = rhs_start = time.time()
-        lhs_future = lhs_batch(**{"async": True})
-        rhs_future = rhs_batch(**{"async": True})
+        lhs_future = lhs_batch(asynchronous=True)
+        rhs_future = rhs_batch(asynchronous=True)
 
         lhs_done = rhs_done = False
         while not (lhs_done and rhs_done):
@@ -327,7 +331,7 @@ def run(date_range, differs, lhs, rhs, filter=None, ctx=None,
                 lhs_end = time.time()
                 lhs_done = True
                 try:
-                    unused, lhs_result = lhs_future.value.next()
+                    unused, lhs_result = next(lhs_future.value)
                 except:
                     _logger.error("Unable to compute LHS of regression test")
                     raise
@@ -336,7 +340,7 @@ def run(date_range, differs, lhs, rhs, filter=None, ctx=None,
                 rhs_end = time.time()
                 rhs_done = True
                 try:
-                    unused, rhs_result = rhs_future.value.next()
+                    unused, rhs_result = next(rhs_future.value)
                 except:
                     _logger.error("Unable to compute RHS of regression test")
                     raise
