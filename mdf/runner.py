@@ -242,7 +242,7 @@ def _run_multiprocess(date_range, callbacks, shifts, filter, num_processes, unsh
         # kick off all the asynchronous runs
         future_results = []
         for batch in batches:
-            future_results.append(batch(async=True))
+            future_results.append(batch(**{"async": True}))
 
         # poll the daemon for this process in case anything is using it while
         # waiting for the results

@@ -1127,22 +1127,22 @@ class MDFContext(object):
             _, timers = x
             return sum([t.total_time for t in timers])
 
-        all_timers = all_timers.items()
+        all_timers = list(all_timers.items())
         all_timers.sort(key=timers_total_time)
 
         total_time = 0.0
         for name, timers in all_timers:
             node_num_calls = sum([t.num_calls for t in timers])
             node_total_time = sum([t.total_time for t in timers])
-            print name
-            print "    Num Calls: %d" % node_num_calls
-            print "    Total Time: %f" % node_total_time
-            print
+            print(name)
+            print("    Num Calls: %d" % node_num_calls)
+            print("    Total Time: %f" % node_total_time)
+            print()
             total_time += node_total_time
 
-        print "Number of nodes: %s" % len(nodes_with_value)
-        print "Number of shifted contexts: %s" % num_shifts
-        print "Total Time: %f" % total_time
+        print("Number of nodes: %s" % len(nodes_with_value))
+        print("Number of shifted contexts: %s" % num_shifts)
+        print("Total Time: %f" % total_time)
 
     def to_dot(self,
                filename=None,

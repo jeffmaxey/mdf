@@ -318,8 +318,8 @@ def run(date_range, differs, lhs, rhs, filter=None, ctx=None,
         rhs_batch.run(date_range, callbacks=differs, filter=filter)
 
         lhs_start = rhs_start = time.time()
-        lhs_future = lhs_batch(async=True)
-        rhs_future = rhs_batch(async=True)
+        lhs_future = lhs_batch(**{"async": True})
+        rhs_future = rhs_batch(**{"async": True})
 
         lhs_done = rhs_done = False
         while not (lhs_done and rhs_done):

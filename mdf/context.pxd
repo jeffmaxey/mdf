@@ -1,7 +1,7 @@
 """
 Cython optimizations for context.py
 """
-from cqueue cimport *
+from .cqueue cimport *
 
 cdef extern from "Python.h":
     long PyThread_get_thread_ident()
