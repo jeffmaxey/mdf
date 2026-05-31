@@ -13,9 +13,6 @@ import pickle
 
 _log = logging.getLogger(__name__)
 
-if sys.version_info[0] > 2:
-    basestring = str
-
 # access via the MDFContext.save method
 def save_context(ctx, filename, start_date=None, end_date=None):
     """
@@ -39,7 +36,7 @@ def save_context(ctx, filename, start_date=None, end_date=None):
     close_fh = True
 
     # determine what compression to use, if any
-    if not isinstance(filename, basestring):
+    if not isinstance(filename, str):
         fh = filename
         close_fh = False
     else:
@@ -76,7 +73,7 @@ def load_context(filename):
     close_fh = True
 
     # determine what compression to use, if any
-    if not isinstance(filename, basestring):
+    if not isinstance(filename, str):
         fh = filename
         close_fh = False
     else:

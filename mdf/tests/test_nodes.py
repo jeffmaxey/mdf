@@ -13,7 +13,7 @@ from mdf import (
 )
 
 from datetime import datetime
-from numpy.testing.utils import assert_almost_equal
+from numpy.testing import assert_almost_equal
 import pandas as pd
 import numpy as np
 import unittest

@@ -5,8 +5,8 @@ This is outside context.py as it doesn't need to by
 cythoned and it's convenient to use inner functions,
 which isn't supported in cython. 
 """
-from nodes import MDFNode, MDFVarNode,_now_node
-from nodetypes import  MDFQueueNode
+from .nodes import MDFNode, MDFVarNode,_now_node
+from .nodetypes import  MDFQueueNode
 import pydot
 import os
 

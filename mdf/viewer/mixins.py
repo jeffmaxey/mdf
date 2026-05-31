@@ -48,7 +48,7 @@ class GridCopyMixin:
         """copy whole grid including column and row labels to the clipboard"""
         lines = []
         
-        col_labels = [self.GetColLabelValue(c) for c in xrange(self.GetNumberCols())]
+        col_labels = [self.GetColLabelValue(c) for c in range(self.GetNumberCols())]
         if reduce(operator.or_, map(bool, col_labels), False):
             lines.append("\t".join([""] + col_labels))
 

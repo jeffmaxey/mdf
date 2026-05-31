@@ -4,10 +4,10 @@ Dialogs used by the mdf viewer
 import wx
 import wx.lib.rcsizer as rcs
 import wx.lib.agw.customtreectrl as CT
-from common import to_wxdate, to_datetime
+from .common import to_wxdate, to_datetime
 import string
 from ..nodes import MDFNode
-import mixins
+from . import mixins
 
 class RunToDialog(wx.Dialog):
     """
@@ -220,7 +220,7 @@ class FiltersDialog(wx.Dialog):
         boxsizer.Add(self.categories_listbox, 1, wx.ALL, 5)
         sizer.Add(boxsizer, 0, wx.EXPAND|wx.ALL, 5)
 
-        for i in xrange(self.categories_listbox.GetCount()):
+        for i in range(self.categories_listbox.GetCount()):
             category = self.categories_listbox.GetString(i)
             if category == "<none>":
                 category = None
@@ -230,7 +230,7 @@ class FiltersDialog(wx.Dialog):
         # tree control of all possible shifted contexts
         all_shifts = {}
         for shifted_ctx in root_ctx.iter_shifted_contexts():
-            for key, value in shifted_ctx.get_shift_set().iteritems():
+            for key, value in shifted_ctx.get_shift_set().items():
                 all_shifts.setdefault(key, set()).add(value)
 
         tree_ctrl = CT.CustomTreeCtrl(self)
@@ -243,7 +243,7 @@ class FiltersDialog(wx.Dialog):
         root.Check(not shift_filter_active or None in shift_filter)
         root.SetData((None, None, False))
 
-        for key in sorted(all_shifts.iterkeys()):
+        for key in sorted(all_shifts.keys()):
             node_item = tree_ctrl.AppendItem(root, key.short_name, ct_type=1)
             node_item.SetData((key, None, True))
             node_item.Set3State(True)
@@ -350,7 +350,7 @@ class FiltersDialog(wx.Dialog):
 
     def IsCategoryFiltered(self):
         """return true if category filters should be applied"""
-        for i in xrange(self.categories_listbox.GetCount()):
+        for i in range(self.categories_listbox.GetCount()):
             if not self.categories_listbox.IsChecked(i):
                 return True
         return False
@@ -360,7 +360,7 @@ class FiltersDialog(wx.Dialog):
         returns a set of category names that are to be included.
         """
         included = set()
-        for i in xrange(self.categories_listbox.GetCount()):
+        for i in range(self.categories_listbox.GetCount()):
             if self.categories_listbox.IsChecked(i):
                 category = self.categories_listbox.GetString(i)
                 if category == "<none>":
@@ -410,7 +410,7 @@ class FiltersDialog(wx.Dialog):
 
     def OnClearAll(self, event):        
         # mark all categories as being included (checked)
-        for i in xrange(self.categories_listbox.GetCount()):
+        for i in range(self.categories_listbox.GetCount()):
             self.categories_listbox.Check(i)
 
         # mark all contexts as being included (checked)

@@ -10,8 +10,8 @@ import types
 import os
 import re
 from .parser import tokenize, get_assigned_node_name
-from context import MDFContext, MDFNodeBase
-from common import DIRTY_FLAGS
+from .context import MDFContext, MDFNodeBase
+from .common import DIRTY_FLAGS
 
 # these are cimported in nodes.pxd
 # uncomment if not compiling with Cython
@@ -38,7 +38,7 @@ _unpickle_node = None
 
 def _lazy_imports():
     global _pickle_node, _unpickle_node
-    import ctx_pickle
+    from . import ctx_pickle
     _pickle_node = ctx_pickle._pickle_node
     _unpickle_node = ctx_pickle._unpickle_node
 
@@ -85,11 +85,8 @@ def _get_calling_module_and_class():
 
     return None, None
 
-if sys.version_info[0] > 2:
-    import builtins
-    TypeType = builtins.type
-else:
-    TypeType = types.TypeType
+import builtins
+TypeType = builtins.type
 
 def _isgeneratorfunction(func):
     # see inpect.isgeneratorfunction
@@ -195,13 +192,13 @@ class NodeState(object):
             "callers: %s" % ( 
                 ("\n\t\t" +
                 "\n\t\t".join("<ctx %d> : %s" % (
-                    k, "\n\t\t\t".join([n.name for n in v])) for k, v in self.callers.iteritems()))
+                    k, "\n\t\t\t".join([n.name for n in v])) for k, v in self.callers.items()))
                 if self.callers else ""
             ),
             "callees: %s" % ( 
                 ("\n\t\t" +
                 "\n\t\t".join("<ctx %d> : %s" % (
-                    k, "\n\t\t\t".join([n.name for n in v])) for k, v in self.callees.iteritems()))
+                    k, "\n\t\t\t".join([n.name for n in v])) for k, v in self.callees.items()))
                 if self.callees else ""
             ),
         ]) + "\n</NodeState>"
@@ -531,7 +528,7 @@ class MDFNode(MDFNodeBase):
         """
         node_state = self._get_state(ctx)
         results = []
-        for ctx_id, callees in node_state.callees.iteritems():
+        for ctx_id, callees in node_state.callees.items():
             ctx = _get_context(ctx_id, ctx)
             for callee in callees:
                 results.append((callee, ctx))
@@ -570,7 +567,7 @@ class MDFNode(MDFNodeBase):
         """
         node_state = self._get_state(ctx)
         results = []
-        for ctx_id, callers in node_state.callers.iteritems():
+        for ctx_id, callers in node_state.callers.items():
             ctx = _get_context(ctx_id, ctx)
             for callee in callers:
                 results.append((callers, ctx))
@@ -672,13 +669,13 @@ class MDFNode(MDFNodeBase):
 
             # clear any alt_contexts set in any of shifted contexts that
             # have their alt state set to this one
-            for other_state in caller._states.itervalues():
+            for other_state in caller._states.values():
                 if other_state.alt_context is not None \
                 and other_state.alt_context._id == node_state.ctx_id:
                     other_state.alt_context = None
 
             # add any nodes that called this one to the list to be cleared
-            for ctx_id, callers in node_state.callers.iteritems():
+            for ctx_id, callers in node_state.callers.items():
                 for caller in callers:
                     node_state = caller._states[ctx_id]
                     cqueue_push(to_clear, (caller, node_state))
@@ -733,7 +730,7 @@ class MDFNode(MDFNodeBase):
                 continue
 
             # add the callees of this node to the search
-            for ctx_id, callees in callee_state.callees.iteritems():
+            for ctx_id, callees in callee_state.callees.items():
                 for callee in callees:
                     cqueue_push(remaining_callees, (ctx_id, callee))
 
@@ -860,7 +857,7 @@ class MDFNode(MDFNodeBase):
                 node_state.value = None
 
             # add this node's callers to the list to process
-            for ctx_id, callers in node_state.callers.iteritems():
+            for ctx_id, callers in node_state.callers.items():
                 for caller in callers:
                     try:
                         caller_state = caller._states[ctx_id]
@@ -897,7 +894,7 @@ class MDFNode(MDFNodeBase):
             # mark any calling nodes as dirty
             caller = cython.declare(MDFNode)
             caller_state = cython.declare(NodeState)
-            for ctx_id, callers in node_state.callers.iteritems():
+            for ctx_id, callers in node_state.callers.items():
                 for caller in callers:
                     try:
                         caller_state = caller._states[ctx_id]
@@ -1364,7 +1361,7 @@ def vargroup(group_name=None, **kwargs):
         >>> params.attr2()
         5
     """
-    attribs = dict([(k, varnode(k, default=v, category=group_name)) for k, v in kwargs.iteritems()])
+    attribs = dict([(k, varnode(k, default=v, category=group_name)) for k, v in kwargs.items()])
     cls_name = "%s__%s" % (group_name, str(uuid.uuid4()))
     return _VarGroupMeta(cls_name, bases=(object,), dict=attribs, group_name=group_name)
 
@@ -1382,10 +1379,8 @@ class MDFEvalNode(MDFNode):
         MDFNode.__init__(self, name=name, short_name=short_name, fqname=fqname, cls=cls, category=category)
         self._has_timestep_update = self._is_generator
         
-        # get func_doc first then __doc__ to allow instances (iterators etc) to set their own docstring
-        self.func_doc = getattr(func, "func_doc", None)
-        if self.func_doc is None:
-            self.func_doc = getattr(func, "__doc__", None)
+        # get __doc__ to allow instances (iterators etc) to set their own docstring
+        self.__doc__ = getattr(func, "__doc__", None)
 
     @property
     def node_type(self):
@@ -1415,9 +1410,7 @@ class MDFEvalNode(MDFNode):
         self._is_generator = _isgeneratorfunction(self._func)
 
         # update the docstring
-        self.func_doc = getattr(func, "func_doc", None)
-        if self.func_doc is None:
-            self.func_doc = getattr(func, "__doc__", None)
+        self.__doc__ = getattr(func, "__doc__", None)
 
     def _bind(self, other, owner):
         """
@@ -1435,7 +1428,7 @@ class MDFEvalNode(MDFNode):
             self._filter_func = other._filter_func
 
         # set the docstring for the bound node to the same as the unbound one
-        self.func_doc = other.func_doc
+        self.__doc__ = other.__doc__
 
     def _bind_function(self, func, owner):
         """convenience method for binding a function to an owner"""
@@ -1693,7 +1686,7 @@ class MDFEvalNode(MDFNode):
 
         shift_set = cython.declare(dict)
         shift_set = {}
-        for shifted_node, shifted_value in ctx_shift_set.iteritems():
+        for shifted_node, shifted_value in ctx_shift_set.items():
             # if the context is shifted by self then include self in the shift set
             if shifted_node is self:
                 shift_set[shifted_node] = shifted_value
@@ -1715,7 +1708,7 @@ class MDFEvalNode(MDFNode):
         callee_ctx = cython.declare(MDFContext)
         alt_state = cython.declare(NodeState)
         alt_state = self._get_state(alt_ctx)
-        for ctx_id, callees in node_state.callees.iteritems():
+        for ctx_id, callees in node_state.callees.items():
             callee_ctx = _get_context(ctx_id)
             for callee in callees:
                 self.add_dependency(alt_ctx, callee, callee_ctx)

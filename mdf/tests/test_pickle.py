@@ -51,17 +51,17 @@ class PickleTest(unittest.TestCase):
         x = pickle.dumps(self.ctx)
         new_ctx = pickle.loads(x)
 
-        self.assertEquals(new_ctx[A], a)
-        self.assertEquals(new_ctx[B], b)
-        self.assertEquals(new_ctx[C], c)
+        self.assertEqual(new_ctx[A], a)
+        self.assertEqual(new_ctx[B], b)
+        self.assertEqual(new_ctx[C], c)
 
         # unpickling the context shouldn't re-evaluate anything
-        self.assertEquals(num_calls, _b_num_calls)
+        self.assertEqual(num_calls, _b_num_calls)
 
     def test_node_method_pickle(self):
         # get another node via a nodetype method
         # use nan in the args as there were problems pickling/unpicking nan
-        node = A.samplenode(initial_value=np.nan, offset=pa.datetools.BMonthEnd())
+        node = A.samplenode(initial_value=np.nan, offset=pa.offsets.BMonthEnd())
         
         # test text and binary pickle formats
         for protocol in (0, pickle.HIGHEST_PROTOCOL):
@@ -87,19 +87,19 @@ class PickleTest(unittest.TestCase):
         new_shifted_ctx = new_ctx.shift({A : a})
         self.assertNotEquals(new_shifted_ctx, shifted_ctx) 
 
-        self.assertEquals(new_shifted_ctx[A], a)
-        self.assertEquals(new_shifted_ctx[B], b)
-        self.assertEquals(new_shifted_ctx[C], c)
+        self.assertEqual(new_shifted_ctx[A], a)
+        self.assertEqual(new_shifted_ctx[B], b)
+        self.assertEqual(new_shifted_ctx[C], c)
 
         # unpickling the context shouldn't re-evaluate anything
-        self.assertEquals(num_calls, _b_num_calls)
+        self.assertEqual(num_calls, _b_num_calls)
 
     def test_dynamic_varnode_pickle(self):
         # shift B by a temporary varnode with a value set in the root context
         temp_varnode = varnode(default="temp_varnode_default")
         shifted_ctx = self.ctx.shift({B : temp_varnode})
         self.ctx[temp_varnode] = "temp_varnode"
-        self.assertEquals(shifted_ctx[B], "temp_varnode")
+        self.assertEqual(shifted_ctx[B], "temp_varnode")
 
         # pickle the context, unregister the node and recreate the context
         x = pickle.dumps(self.ctx)
@@ -107,15 +107,15 @@ class PickleTest(unittest.TestCase):
         new_ctx = pickle.loads(x)
 
         # find the shifted context (can't reshift as temp_varnode was unregistered)
-        self.assertEquals(len(new_ctx.get_shifted_contexts()), 1)
+        self.assertEqual(len(new_ctx.get_shifted_contexts()), 1)
         shifted_ctx = new_ctx.get_shifted_contexts()[0]
 
         # check that B in the shifted context is still set
-        self.assertEquals(shifted_ctx[B], "temp_varnode")
+        self.assertEqual(shifted_ctx[B], "temp_varnode")
         
         # check that temp_varnode refers to the original node, not the new one
         # that had to be recreated when un-pickled.
-        self.assertEquals(shifted_ctx[temp_varnode], "temp_varnode_default")
+        self.assertEqual(shifted_ctx[temp_varnode], "temp_varnode_default")
 
     def test_save(self):
         tmpdir = tempfile.mkdtemp()
@@ -124,14 +124,14 @@ class PickleTest(unittest.TestCase):
                 filename = os.path.join(tmpdir, "ctx" + ext)
 
                 a = self.ctx[A] = random.randint(0, 100)
-                self.assertEquals(self.ctx[A], a)
+                self.assertEqual(self.ctx[A], a)
 
                 self.ctx.save(filename)
                 _logger.info("context file '%s' is %db" % (os.path.basename(filename),
                                                            os.stat(filename).st_size))
                 new_ctx = MDFContext.load(filename)
     
-                self.assertEquals(new_ctx[A], a)
+                self.assertEqual(new_ctx[A], a)
 
                 os.unlink(filename)
         finally:

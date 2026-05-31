@@ -12,8 +12,6 @@ import matplotlib.pyplot as pp
 import sys
 import types
 
-if sys.version_info[0] > 2:
-    basestring = str
 
 def _get_labels(node, label=None, value=None):
     """
@@ -34,13 +32,13 @@ def _get_labels(node, label=None, value=None):
             if isinstance(label, (tuple, list, np.ndarray, pa.core.generic.NDFrame, pa.Index)):
                 label = list(label)
                 if len(label) < len(value):
-                    label += ["%s.%d" % (label, i) for i in xrange(len(label), len(value))]
+                    label += ["%s.%d" % (label, i) for i in range(len(label), len(value))]
                 return label[:len(value)]
 
             # otherwise create a list using the value's index
             if isinstance(value, pa.Series):
                 return ["%s.%s" % (label, c) for c in value.index]
-            return ["%s.%d" % (label, i) for i in xrange(len(value))]
+            return ["%s.%d" % (label, i) for i in range(len(value))]
 
         # if value is not a list return a single label
         if isinstance(label, (tuple, list, np.ndarray, pa.core.generic.NDFrame)):
@@ -92,7 +90,7 @@ def _relabel(columns, node_names, short_names, ctx_ids):
                 overlap_node_names.setdefault(col, [])\
                                     .append((i, j, node_name, short_name, ctx_id))
 
-    for col, details in overlap_node_names.iteritems():
+    for col, details in overlap_node_names.items():
         is_, js_, node_names, short_names, ctx_ids = zip(*details)
 
         # prefix with the node short names if they're unique
@@ -124,7 +122,7 @@ def _relabel(columns, node_names, short_names, ctx_ids):
 
         # If none of those are unique use a numeric suffix.
         # This should be quite unlikely.
-        for x in xrange(len(details)):
+        for x in range(len(details)):
             columns[i][j] = "%s.%d" % (col, x)
 
     return columns
@@ -169,7 +167,7 @@ class CSVWriter(object):
         self.writers = {}
         if not isinstance(fh, MDFNode):
             # if fh isn't a node use the same writer for all contexts
-            if isinstance(fh, basestring):
+            if isinstance(fh, str):
                 fh = open(fh, "wb")
                 self.open_fhs.append(fh)
             writer = csv.writer(fh)
@@ -211,7 +209,7 @@ class CSVWriter(object):
             fh = self.fh
             if isinstance(fh, MDFNode):
                 fh = ctx.get_value(fh)
-            if isinstance(fh, basestring):
+            if isinstance(fh, str):
                 fh = open(fh, "wb")
                 self.open_fhs.append(fh)
             writer = self.writers[ctx_id] = csv.writer(fh)
@@ -225,7 +223,7 @@ class CSVWriter(object):
                     column = ctx.get_value(column)
                 header.extend(_get_labels(node, column, value))
 
-                if isinstance(value, (basestring, int, float, bool, datetime.date)):
+                if isinstance(value, (str, int, float, bool, datetime.date)):
                     self.handlers.append(self._write_basetype)
                 elif isinstance(value, (list, tuple, np.ndarray, pa.Index, pa.core.generic.NDFrame)):
                     self.handlers.append(self._write_list)
@@ -397,7 +395,7 @@ class DataFrameBuilder(object):
             handler = handler_dict.get(key)
             
             if not handler:
-                if isinstance(node_value, (basestring, int, float, bool, datetime.date)) \
+                if isinstance(node_value, (str, int, float, bool, datetime.date)) \
                 or isinstance(node_value, tuple(np.typeDict.values())):
                     handler = NodeBaseTypeHandler(node, filter=self.filter)
                 elif isinstance(node_value, dict):

@@ -24,7 +24,7 @@ class cqueue(object):
     def __iter__(self):
         return iter(self._queue[self._start:self._end])
 
-    def __nonzero__(self):
+    def __bool__(self):
         return self._end > self._start
 
     def __getitem__(self, i):

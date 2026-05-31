@@ -121,11 +121,11 @@ nodes._lazy_imports()
 if "sphinx" in sys.modules:
     from sphinx.ext.autodoc import AutoDirective
     from sphinx.util.inspect import safe_getattr
-    from nodes import MDFEvalNode
+    from .nodes import MDFEvalNode
 
     def _evalnode_autodoc_getattr(node, attr, *defargs):
         if attr == "__doc__":
-            return node.func_doc
+            return node.__doc__
         safe_getattr(node, attr, *defargs)
 
     AutoDirective._special_attrgetters[MDFEvalNode] = _evalnode_autodoc_getattr

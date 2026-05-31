@@ -3,6 +3,7 @@ import operator
 import datetime
 import numpy as np
 import pandas as pa
+import pandas as pd
 import inspect
 import types
 import sys
@@ -24,14 +25,6 @@ from .ctx_pickle import _unpickle_custom_node, _pickle_custom_node
 from .parser import get_assigned_node_name
 from .common import DIRTY_FLAGS
 
-_python_version = cython.declare(int, sys.version_info[0])
-
-@cython.cfunc
-def _dict_iteritems(d):
-    if _python_version > 2:
-        return iter(d.items())
-    return d.iteritems()
-
 
 # strings are used as dict lookups using nans and np.float64 can be problematic
 _special_floats = cython.declare(dict, {
@@ -51,11 +44,8 @@ class MDFCustomNodeIteratorFactory(MDFIteratorFactory):
         return self.custom_node._custom_iterator_func
 
     @property
-    def func_doc(self):
-        func_doc = getattr(self.func, "func_doc", None)
-        if func_doc is None:
-            func_doc = getattr(self.func, "__doc__", None)
-        return func_doc
+    def __doc__(self):
+        return getattr(self.func, "__doc__", None)
 
     @property
     def node_type_func(self):
@@ -145,7 +135,7 @@ class MDFCustomNode(MDFEvalNode):
         self._cn_func = self._validate_func(func)
         self._category = category
         self._kwargs = dict(nodetype_func_kwargs)
-        self._kwnodes = dict([(k, v) for (k, v) in _dict_iteritems(nodetype_func_kwargs) if isinstance(v, MDFNode)])
+        self._kwnodes = dict([(k, v) for (k, v) in nodetype_func_kwargs) if isinstance(v, MDFNode)].items()
         self._kwfuncs = {} # reserved for functions added via decorators
 
         # if 'filter_node_value' is in the node type generator args we pass in the value of the filter
@@ -168,10 +158,8 @@ class MDFCustomNode(MDFEvalNode):
                              category=category,
                              filter=filter)
 
-        # set func_doc from the inner function's docstring
-        self.func_doc = getattr(func, "func_doc", None)
-        if self.func_doc is None:
-            self.func_doc = getattr(func, "__doc__", None)
+        # set __doc__ from the inner function's docstring
+        self.__doc__ = getattr(func, "__doc__", None)
 
     def __reduce__(self):
         """support for pickling"""
@@ -305,9 +293,7 @@ class MDFCustomNode(MDFEvalNode):
             MDFEvalNode._set_func(self, self._cn_eval_func)
 
         # update the docstring
-        self.func_doc = getattr(func, "func_doc", None)
-        if self.func_doc is None:
-            self.func_doc = getattr(func, "__doc__", None)
+        self.__doc__ = getattr(func, "__doc__", None)
 
         # set the func used by this class
         self._cn_func = func
@@ -325,7 +311,7 @@ class MDFCustomNode(MDFEvalNode):
         
         # bind the eval nodes (won't do anything if they're already bound)
         self._kwnodes = {}
-        for k, node in _dict_iteritems(other._kwnodes):
+        for k, node in other._kwnodes.items():
             if isinstance(node, MDFEvalNode) and _is_member_of(owner, node):
                 self._kwnodes[k] = node.__get__(None, owner)
             else:
@@ -333,12 +319,12 @@ class MDFCustomNode(MDFEvalNode):
 
         # bind the functions in case they're classmethods
         self._kwfuncs = {}
-        for k, func in _dict_iteritems(other._kwfuncs):
+        for k, func in other._kwfuncs.items():
             if _is_member_of(owner, func):
                 self._kwfuncs[k] = self._bind_function(func, owner)
 
         # set the docstring for the bound node to the same as the unbound one
-        self.func_doc = other.func_doc
+        self.__doc__ = other.__doc__
 
     def _get_kwargs(self):
         kwargs = cython.declare(dict)
@@ -347,13 +333,13 @@ class MDFCustomNode(MDFEvalNode):
             kwargs = dict(kwargs)
 
             node = cython.declare(MDFNode)
-            for key, node in _dict_iteritems(self._kwnodes):
+            for key, node in self._kwnodes.items():
                 if key not in self.nodetype_node_kwargs:
                     kwargs[key] = node()
                 else:
                     kwargs[key] = node
 
-            for key, value in _dict_iteritems(self._kwfuncs):
+            for key, value in self._kwfuncs.items():
                 kwargs[key] = value()
 
         # if the filter value should be passed in as a kwarg
@@ -490,7 +476,7 @@ class MDFCustomNodeMethod(object):
         # replace any special floats with string versions so they compare correctly
         # when looking for an existing node
         kwargs_in_key = []
-        for key, value in _dict_iteritems(nodetype_func_kwargs):
+        for key, value in nodetype_func_kwargs.items():
             if value != value:
                 try:
                     value = _special_floats[str(value)]
@@ -549,9 +535,9 @@ class MDFCustomNodeMethod(object):
                                           nodetype_func_kwargs=nodetype_func_kwargs)
 
             # update the docstring
-            derived_node.func_doc = "\n".join(("*Derived Node* ::", "",
+            derived_node.__doc__ = "\n".join(("*Derived Node* ::", "",
                                                 "    " + short_name, "",
-                                                derived_node.func_doc or "")).strip()
+                                                derived_node.__doc__ or "")).strip()
 
             self._derived_nodes[derived_node_key] = derived_node
 
@@ -861,7 +847,7 @@ class MDFDelayNode(MDFCustomNode):
         self._set_func(func)
 
         # set the docstring for the bound node to the same as the unbound one
-        self.func_doc = other.func_doc
+        self.__doc__ = other.__doc__
 
     def _dn_get_prev_value(self):
         # The value returned on date 'now' is the value for the previous day. 
@@ -1063,8 +1049,8 @@ class _samplenode(MDFIterator):
     samples value on the given date offset and yields that value
     until the next date offset.
     
-    offset is a pandas.datetools.DateOffset instance,
-    eg pandas.datetools.BMonthEnd()
+    offset is a pandas.tseries.offsets.DateOffset instance,
+    eg pandas.tseries.offsets.BMonthEnd()
     """    
     _init_kwargs_ = ["filter_node_value", "offset", "date_node", "initial_value"]
 
@@ -1580,7 +1566,7 @@ class _rowiternode(MDFIterator):
 
             elif isinstance(data, pa.Series):
                 self._is_series = True
-                self._iter = _dict_iteritems(data)
+                self._iter = data.items()
                 self._current_index, self._current_value = next(self._iter)
 
             else:
@@ -1857,7 +1843,7 @@ def _applynode(value, func, args=(), kwargs={}):
         new_args.append(arg)
 
     new_kwargs = {}
-    for key, value in _dict_iteritems(kwargs):
+    for key, value in kwargs.items():
         if isinstance(value, MDFNode):
             value = value()
         new_kwargs[key] = value
@@ -1887,7 +1873,7 @@ class MDFLookAheadNode(MDFCustomNode):
         # return True if date is going backwards to indicate we should be marked as dirty
         return ctx.get_date() > date
 
-def _lookaheadnode(value_unused, owner_node, periods, filter_node=None, offset=pa.datetools.BDay()):
+def _lookaheadnode(value_unused, owner_node, periods, filter_node=None, offset=pd.offsets.BDay()):
     """
     Node type that creates an :py:class:`MDFNode` that returns
     a pandas Series of values of the underlying node for a sequence
@@ -1907,7 +1893,7 @@ def _lookaheadnode(value_unused, owner_node, periods, filter_node=None, offset=p
     
     The dates start with the current context date (i.e. :py:func:`now`) and is
     incremented by the optional argument `offset` which defaults to weekdays
-    (see :py:class:`pandas.datetools.BDay`).
+    (see :py:class:`pandas.tseries.offsets.BDay`).
 
     :param int periods: the total number of observations to collect, excluding any that are ignored due
                         to any filter being used.
@@ -1981,9 +1967,5 @@ class Op(object):
             args = (rhs,)
         return self.lhs.applynode(func=self.op, args=args)
 
-if sys.version_info[0] <= 2:
-    for op in ("__add__", "__sub__", "__mul__", "__div__", "__neg__"):
-        MDFNode._additional_attrs_[op] = Op(getattr(operator, op)) 
-else:
-    for op in ("__add__", "__sub__", "__mul__", "__truediv__", "__neg__"):
-        MDFNode._additional_attrs_[op] = Op(getattr(operator, op))
+for op in ("__add__", "__sub__", "__mul__", "__truediv__", "__neg__"):
+    MDFNode._additional_attrs_[op] = Op(getattr(operator, op))

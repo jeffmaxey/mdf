@@ -109,10 +109,10 @@ class NodeProperties(wx.Panel):
             self.ctx_grid_sizer.Clear(True)
             if shift_set:
                 self.ctx_title.SetLabel("ctx shift set:")
-                for i, n in enumerate(sorted(shift_set.iterkeys(), key=lambda x: x.short_name)):
+                for i, n in enumerate(sorted(shift_set.keys(), key=lambda x: x.short_name)):
                     # convert the shift value to some sensible looking string
                     shift_value = shift_set[n]
-                    if isinstance(shift_value, basestring):
+                    if isinstance(shift_value, str):
                         shift_value = repr(shift_value)
 
                     if isinstance(shift_value, MDFNode):
