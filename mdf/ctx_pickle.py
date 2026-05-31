@@ -164,22 +164,22 @@ def _unpickle_context(cls, ctx_id, now, node_states, shift_sets):
         node_state_callers = node_state.callers
         node_state.callers = {}
         for caller_ctx_id, callers in node_state_callers.items():
-            new_caller_ctx_id = ctx_id_fixup.get(caller_ctx_id)
-            if new_caller_ctx_id is None:
+            if caller_ctx_id not in ctx_id_fixup:
                 continue
+            new_caller_ctx_id = ctx_id_fixup[caller_ctx_id]
             node_state.callers[new_caller_ctx_id] = callers
 
         node_state_callees = node_state.callees
         node_state.callees = {}
         for callee_ctx_id, callees in node_state_callees.items():
-            new_callee_ctx_id = ctx_id_fixup.get(callee_ctx_id)
-            if new_callee_ctx_id is None:
+            if callee_ctx_id not in ctx_id_fixup:
                 continue
+            new_callee_ctx_id = ctx_id_fixup[callee_ctx_id]
             node_state.callees[new_callee_ctx_id] = callees
 
-        new_ctx_id = ctx_id_fixup.get(ctx_id)
-        if new_ctx_id is None:
+        if ctx_id not in ctx_id_fixup:
             continue
+        new_ctx_id = ctx_id_fixup[ctx_id]
         node._states[new_ctx_id] = node_state
 
     return root
