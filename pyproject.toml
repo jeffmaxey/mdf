@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68", "Cython>=3.0", "numpy"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mdf"
+version = "2.2.1"
+description = "MDF - Data Flow Programming Toolkit"
+requires-python = ">=3.12"
+license = { text = "BSD" }
+dependencies = [
+    "Cython",
+    "numpy",
+    "pyzmq",
+    "Pyro4",
+    "decorator",
+    "pandas",
+    "pyparsing",
+    "matplotlib",
+    "openpyxl",
+    "pydot",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-cov"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["mdf*"]
+
+[tool.setuptools.package-data]
+"mdf.viewer.icons" = ["*.ico"]
+
+[tool.pytest.ini_options]
+testpaths = ["mdf/tests"]

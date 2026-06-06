@@ -37,7 +37,7 @@ from dialogs import (
     FiltersDialog
 )
 
-from common import to_wxdate, load_icon, load_bitmap
+from .common import to_wxdate, load_icon, load_bitmap
 
 # locals dict for new pycrust sessions
 _default_pycrust_locals = {
@@ -192,7 +192,7 @@ def _apply_filters(nodes_and_ctxs, ctx_filter, category_filter):
                         include = False
                 else:
                     # check if shift set is included
-                    for key, value in shift_set.iteritems():
+                    for key, value in shift_set.items():
                         if key in ctx_filter and value in ctx_filter[key]:
                             break
                     else:
@@ -1330,7 +1330,7 @@ class MDFViewerFrame(wx.Frame):
             item = tree.GetRootItem()
             while expand_path:
                 sibling_id = expand_path.popleft()
-                for x in xrange(sibling_id):
+                for x in range(sibling_id):
                     item = tree.GetNextSibling(item)
 
                 # if this is the last item select it and return
@@ -1458,7 +1458,7 @@ class MDFViewerFrame(wx.Frame):
 
         # make the root context dependent on the head nodes
         self._root_node.clear(root_ctx)
-        for ctx, nodes in head_nodes.iteritems():
+        for ctx, nodes in head_nodes.items():
             for node in nodes:
                 self._root_node.add_dependency(root_ctx, node, ctx)
 

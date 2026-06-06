@@ -15,8 +15,6 @@ from datetime import datetime
 
 _log = logging.getLogger(__name__)
 
-if sys.version_info[0] > 2:
-    basestring = str
 
 def _to_range(row, col, sheet=None):
     """returns an Excel range string, e.g. 0, 0 => A1"""
@@ -91,7 +89,7 @@ class DataFrameDiffer(DataFrameBuilder, Differ):
     def _get_nodes(self, nodes_or_names):
         nodes = []
         for n in nodes_or_names:
-            if isinstance(n, basestring) and "." in n:
+            if isinstance(n, str) and "." in n:
                 name = n
                 # import the module if necessary
                 components = name.split(".")
@@ -421,8 +419,8 @@ class DataFrameDiffer(DataFrameBuilder, Differ):
                                         "l" : _to_range(0, col_i + 1, lhs_ws),
                                         "r" : _to_range(0, col_i + 1, rhs_ws)}))
     
-                for col_i in xrange(1, max_cols + 1):
-                    for row_i in xrange(1, max_rows + 1):
+                for col_i in range(1, max_cols + 1):
+                    for row_i in range(1, max_rows + 1):
                         if is_abs:
                             diffs_ws.write(row_i,
                                            col_i,

@@ -1,19 +1,13 @@
 """
 Functions to provide pickle support to MDF classes
 """
-from nodes import MDFNode, MDFVarNode, NodeState
-from context import MDFContext, ShiftSet
+from .nodes import MDFNode, MDFVarNode, NodeState
+from .context import MDFContext, ShiftSet
 import cython
 import sys
 import logging
 import os
 import struct
-
-import sys
-if sys.version_info[0] > 2:
-    from builtins import __import__
-else:
-    from __builtin__ import __import__
 
 _log = logging.getLogger(__name__)
 
@@ -25,59 +19,6 @@ _log = logging.getLogger(__name__)
 # to pickle in a way that's compatible with older versions
 _pickle_version = cython.declare(int)
 _pickle_version = int(os.environ.get("MDF_PICKLE_VERSION", 0))
-
-#
-# the standard pickle.Unpickler doesn't handle NaNs
-# so we override the load_float method here
-#
-if sys.version_info[0] <= 2:
-    import pickle
-
-    try:
-        import numpy as np
-        nan = np.nan
-        inf = np.inf
-    except ImportError:
-        nan = float("nan")
-        inf = float("inf")
-
-    _special_floats = cython.declare(dict, {
-        # NaN
-        "nan"       : nan,
-        "1.#QNAN"   : nan,
-        "-1.#QNAN"  : nan,
-        # Quiet NaN
-        "1.#IND"    : nan,
-        "-1.#IND"   : nan,
-        # INF
-        "1.#INF"    : inf,
-        "-1.#INF"   : -inf,
-    })
-
-    _special_binfloats = cython.declare(dict, {
-        struct.pack(">d", nan)   : nan,
-        struct.pack(">d", inf)   : inf,
-        struct.pack(">d", -inf)  : -inf,
-    })
-
-    def load_float(unpickler):
-        value = unpickler.readline()[:-1]
-        special_value = _special_floats.get(value, None)
-        if special_value is not None:
-            unpickler.append(special_value)
-            return
-        unpickler.append(float(value))
-
-    def load_binfloat(unpickler, unpack=struct.unpack):
-        buf = unpickler.read(8)
-        special_value = _special_binfloats.get(buf, None)
-        if special_value is not None:
-            unpickler.append(special_value)
-            return
-        unpickler.append(unpack('>d', buf)[0])  
-
-    pickle.Unpickler.dispatch[pickle.FLOAT] = load_float
-    pickle.Unpickler.dispatch[pickle.BINFLOAT] = load_binfloat
 
 class MissingNodeError(Exception):
     pass
@@ -126,8 +67,8 @@ def _pickle_context(ctx):
 
     # get the cached values for all nodes in any of the contexts we're interested in
     node_states = []
-    for node in _all_nodes.itervalues():
-        for ctx_id, node_state in node._states.iteritems():
+    for node in _all_nodes.values():
+        for ctx_id, node_state in node._states.items():
             if ctx_id in all_ctx_ids:
                 node_states.append((ctx_id, node, NodeStateWrapper(node_state)))
 
@@ -222,13 +163,13 @@ def _unpickle_context(cls, ctx_id, now, node_states, shift_sets):
 
         node_state_callers = node_state.callers
         node_state.callers = {}
-        for caller_ctx_id, callers in node_state_callers.iteritems():
+        for caller_ctx_id, callers in node_state_callers.items():
             new_caller_ctx_id = ctx_id_fixup[caller_ctx_id]
             node_state.callers[new_caller_ctx_id] = callers
 
         node_state_callees = node_state.callees
         node_state.callees = {}
-        for callee_ctx_id, callees in node_state_callees.iteritems():
+        for callee_ctx_id, callees in node_state_callees.items():
             new_callee_ctx_id = ctx_id_fixup[callee_ctx_id]
             node_state.callees[new_callee_ctx_id] = callees
 
@@ -278,7 +219,7 @@ def _unpickle_node_state(ctx_id, dirty_flags, attribs, additional_attribs):
     node_state.override = attribs["override"]
 
     wrapper = NodeStateWrapper(node_state)
-    for attr, value in additional_attribs.iteritems():
+    for attr, value in additional_attribs.items():
         setattr(wrapper, attr, value)            
 
     return wrapper

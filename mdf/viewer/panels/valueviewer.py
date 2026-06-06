@@ -130,7 +130,7 @@ class DataFramePanel(wx.grid.Grid, GridCopyMixin):
         _dtypes = {
             int         : wx.grid.GRID_VALUE_NUMBER,
             float       : wx.grid.GRID_VALUE_FLOAT,
-            basestring  : wx.grid.GRID_VALUE_STRING,
+            str  : wx.grid.GRID_VALUE_STRING,
             bool        : wx.grid.GRID_VALUE_BOOL,
             date        : wx.grid.GRID_VALUE_DATETIME,
             datetime    : wx.grid.GRID_VALUE_DATETIME,
@@ -313,8 +313,8 @@ class DictPanel(wx.lib.scrolledpanel.ScrolledPanel):
 
     def SetValue(self, value):
         has_complex_type = False
-        for v in value.itervalues():
-            if not isinstance(v, (basestring, int, float, bool, datetime, date)):
+        for v in value.values():
+            if not isinstance(v, (str, int, float, bool, datetime, date)):
                 has_complex_type = True
 
         if not has_complex_type:
@@ -373,7 +373,7 @@ class DictTreeCtrl(wx.lib.agw.customtreectrl.CustomTreeCtrl):
         self.ExpandAllChildren(root)
 
     def _add_dict(self, root, d):
-        keys = sorted(d.iterkeys())
+        keys = sorted(d.keys())
         values = (d[k] for k in keys)
 
         self.SetItemHasChildren(root, True)
@@ -401,7 +401,7 @@ class DictTreeCtrl(wx.lib.agw.customtreectrl.CustomTreeCtrl):
                 self._add_dict(item, d)
                 continue
 
-            if isinstance(v, (int, basestring)):
+            if isinstance(v, (int, str)):
                 self.AppendItem(root, "%s %s" % (node_label, v))
                 continue
 
@@ -442,7 +442,7 @@ class NpArrayPanel(wx.grid.Grid, GridCopyMixin):
         _dtypes = {
             int         : wx.grid.GRID_VALUE_NUMBER,
             float       : wx.grid.GRID_VALUE_FLOAT,
-            basestring  : wx.grid.GRID_VALUE_STRING,
+            str  : wx.grid.GRID_VALUE_STRING,
             bool        : wx.grid.GRID_VALUE_BOOL,
             date        : wx.grid.GRID_VALUE_DATETIME,
             datetime    : wx.grid.GRID_VALUE_DATETIME,

@@ -13,11 +13,7 @@ import logging
 import bz2
 import os
 import sys
-
-if sys.version_info[0] > 2:
-    from io import BytesIO
-else:
-    from StringIO import StringIO as BytesIO
+from io import BytesIO
 
 try:
     _Serializer = Pyro4.util.PickleSerializer

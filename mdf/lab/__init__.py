@@ -6,9 +6,10 @@ import logging
 
 from functools import partial
 from datetime import datetime
-from collections import namedtuple, Sequence
-from pandas.core import datetools
-from pandas.core.datetools import BDay
+from collections import namedtuple
+from collections.abc import Sequence
+import pandas.tseries.offsets as _pd_offsets
+BDay = _pd_offsets.BDay
 
 from mdf.nodes import MDFNode, MDFVarNode, now
 from mdf.runner import plot
@@ -21,10 +22,7 @@ from IPython.core.magic import Magics, line_magic, magics_class
 from mdf import __all__ as __mdf_all__
 from mdf import *
 
-import sys
-if sys.version_info[0] > 2:
-    basestring = str
-    from functools import reduce
+from functools import reduce
 
 __all__ = list(set(__mdf_all__).difference(["plot"]).union(["mdf_plot"]))
 
@@ -176,7 +174,7 @@ class MDFMagics(Magics):
         if parameter_s:
             now = _parse_datetime(parameter_s, self.shell.user_global_ns, self.shell.user_ns)
         else:
-            now = datetools.normalize_date(datetime.now())
+            now = pd.Timestamp(datetime.now()).normalize().to_pydatetime()
         ctx = MDFContext(now)
         ctx._activate_ctx()
 
@@ -192,7 +190,7 @@ class MDFMagics(Magics):
         or: %mdf_timestep WEEKDAY
         """
         if parameter_s:
-            self.__timestep = datetools.getOffset(parameter_s)
+            self.__timestep = pd.tseries.frequencies.to_offset(parameter_s)
         return self.__timestep
 
     @line_magic
@@ -302,7 +300,7 @@ class MDFMagics(Magics):
         num_processes = 0
         if len(args) > 0:
             arg_name, arg = args[-1]
-            if isinstance(arg, basestring) and arg.startswith("||"):
+            if isinstance(arg, str) and arg.startswith("||"):
                 arg_name, arg = args.pop()
                 num_processes = int(arg[2:])
 
@@ -579,14 +577,14 @@ def _parse_datetime(arg, global_ns={}, local_ns={}):
         return datetime(arg / 10000, (arg / 100) % 100, arg % 100)
 
     # Attempt to use the standard datetime parsing
-    parsed = datetools.to_datetime(arg)
+    parsed = pd.to_datetime(arg)
     if isinstance(parsed, datetime):
         return parsed
 
     # if the parsing failed, try to evaluate the string
     try:
         dt = eval(arg, global_ns, local_ns)
-        return datetools.to_datetime(dt)
+        return pd.to_datetime(dt)
     except NameError:
         pass
 
@@ -678,7 +676,7 @@ def load_ipython_extension(ip):
         ip.register_magics(MDFMagics)
 
         # create the ambient context
-        today = datetools.normalize_date(datetime.now())
+        today = pd.Timestamp(datetime.now()).normalize().to_pydatetime()
         ctx = MDFContext(today)
         ctx._activate_ctx()
 

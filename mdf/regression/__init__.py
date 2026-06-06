@@ -26,10 +26,7 @@ from ..context import MDFContext
 from ..nodes import evalnode
 from .differs import *
 
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle
+import pickle
 
 
 # Import Pyro from the remote package to ensure that the serializer patching 
@@ -293,20 +290,20 @@ def run(date_range, differs, lhs, rhs, filter=None, ctx=None,
     shutdown_lhs = False
     shutdown_rhs = False
 
-    if isinstance(lhs, (basestring, NoneType)) \
-    and isinstance(rhs, (basestring, NoneType)):
+    if isinstance(lhs, (str, type(None))) \
+    and isinstance(rhs, (str, type(None))):
         # get both remote contexts from the virtual env name
         lhs, rhs = get_contexts(lhs, rhs, ctx=ctx,
                                 lhs_modulenames=lhs_modulenames,
                                 rhs_modulenames=rhs_modulenames,
                                 init_func=init_func, startup_data=startup_data)
         shutdown_lhs = shutdown_rhs = True
-    elif isinstance(lhs, (basestring, NoneType)):
+    elif isinstance(lhs, (str, type(None))):
         # only need the lhs, rhs must already be a remote ctx
         lhs = _get_context(lhs, ctx, side="LHS", modulenames=lhs_modulenames,
                            init_func=init_func, startup_data=startup_data)
         shutdown_lhs = True
-    elif isinstance(rhs, (basestring, NoneType)):
+    elif isinstance(rhs, (str, type(None))):
         # only need the rhs, lhs must already be a remote ctx
         rhs = _get_context(rhs, ctx, side="RHS", modulenames=rhs_modulenames,
                            init_func=init_func, startup_data=startup_data)
